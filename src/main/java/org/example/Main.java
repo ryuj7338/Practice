@@ -8,17 +8,19 @@ public class Main {
 
         Scanner sc = new Scanner(System.in);
 
-        int rows = sc.nextInt();
-        int cols = sc.nextInt();
+        int n = sc.nextInt();
 
-        for (int i = 0; i < cols; i++) {
-            for (int j = 0; j < rows; j++) {
-                System.out.print("*");
+        // 공백 생성
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < i; j++) {
+                System.out.print(" ");
+            }
+            // 숫자 출력
+            for (int k = n - i; k > 0; k--) {
+                System.out.print(k + " ");
             }
             System.out.println();
         }
-
-
-
+        
     }
 }
