@@ -6,6 +6,9 @@ import java.util.List;
 import java.util.Scanner;
 
 public class Main {
+
+    static List<Motivation> motivations = new ArrayList<>();   // Motivation을  motivations라는 객체에 리스트를 저장하기 위해 생성
+
     public static void main(String[] args) {
 
         System.out.println("== motivation 실행==");
@@ -14,7 +17,6 @@ public class Main {
 
         int lastId = 0; // 등록할 때 번호가 필요하니까 생성 / 0으로 세팅
 
-        List<Motivation> motivations = new ArrayList<>();   // Motivation을  motivations라는 객체에 리스트를 저장하기 위해 생성
 
         while (true) {
             System.out.print("명령어) ");
@@ -69,32 +71,78 @@ public class Main {
 
 
                 System.out.println("======================================");
-            }else if(cmd.startsWith("delete")) {
+            } else if (cmd.startsWith("delete")) {
                 int id = Integer.parseInt(cmd.split(" ")[1]);   // delete로 시작하는 명령어 뒤에 번호만을 추출하기 위해서
 
-                Motivation foundId = null;      // Motivation과 연결될 객체 founId를 만들고 아무것도 안 들어있게 만듦
-                int foundNum = 0;  //
+                Motivation foundId = foundById(id);      // 새로운 생성자 인수가 담겨있는 생성
 
-                for (int i = 0; i < motivations.size(); i++) {
-                    Motivation save = motivations.get(i);
-                    if (save.getId() == id) {
-                        foundId = save;
-                        foundNum = i;
+                int foundNum = 0;   // founNum에 찾은 번호를 넣기 위해
+
+                for (int i = 0; i < motivations.size(); i++) {  // motivation 저장되어있는 번호를 찾을때까지 반복문 실행
+                    Motivation save = motivations.get(i);   // 원하는 번호를 찾았다면 motivation에 번호를 가져오겠다.
+                    if (save.getId() == id) {   // save에 저장되어있는 id와 내가 입력한 아이디가 같다면
+                        foundId = save; // foundid에 save에 있는 번호를 넘겨주겠다.
+                        foundNum = i;   // 그리고 foundNum에 i를 담겠다.
                         break;
                     }
                 }
 
                 if (foundId == null) {
-                    System.out.println("해당 번호가 없습니다.");
+                    System.out.println("해당 motivation이 없습니다.");
                     return;
                 }
 
                 motivations.remove(foundNum);
                 System.out.printf("%d번 motivation이 삭제되었습니다.\n", id);
 
-            }
+            } else if (cmd.startsWith("edit")) {
+                int id = Integer.parseInt(cmd.split(" ")[1]);
 
-            else {     // 이상한 명령어를 입력시 사용할 수 없다고 알려주기
+                Motivation foundId = foundById(id); // foundById에서 가져온 아이디를 foundId에 담겠다.
+
+
+                if (foundId == null) {  // 찾은 아이디가 없다면 없다고 알려주기
+                    System.out.println("해당 motivation이 없습니다.");
+                    return;
+                }
+
+                // 수정하기 위해 기존에 있는 motivation과 source 출력
+                System.out.println("기존 motivation: " + foundId.getMotivation());
+                System.out.println("기존 source: " + foundId.getSource());
+
+
+                String newMotivation;
+                String newSource;
+
+                while (true) {  //
+                    System.out.print("new motivation: ");
+                    newMotivation = sc.nextLine().trim();
+
+                    if (newMotivation.length() != 0) {      // newMotivation에 담겨있는게 있다면 수정할 수 있게 하고 다음으로 넘어가기
+                        break;
+                    }
+                    System.out.println("수정할 motivation을 입력하세요.");
+                }
+
+
+                while (true) {
+                    System.out.print("new source: ");
+                    newSource = sc.nextLine().trim();
+
+                    if (newSource.length() != 0) {       // newSource에 담겨있는게 있다면 수정할 수 있게 하고 다음으로 넘어가기
+                        break;
+                    }
+                    System.out.println("수정할 Source를 입력하세요.");       // newSource에 담겨있는게 없다면 입력하라고 알려주기
+                }
+
+
+                foundId.setMotivation(newMotivation);   // 기존에 있던걸 수정된 motivation으로 변경
+                foundId.setSource(newSource);   // 기존에 있던걸 수정된 source으로 변경
+
+                System.out.printf("%d번 motivation이 수정되었습니다.\n", id);
+
+
+            } else {     // 이상한 명령어를 입력시 사용할 수 없다고 알려주기
                 System.out.println("사용할 수 없는 명령어입니다.");
                 continue;
             }
@@ -102,6 +150,15 @@ public class Main {
         }
 
 
+    }
+
+    private static Motivation foundById(int id) {   // delete와 edit에서 사용하는데 코드가 같아 간소화
+        for (Motivation save : motivations) {   // 내가 입력한 번호를 찾을때까지 순회
+            if (save.getId() == id) {
+                return save;        // 찾았다면 반환
+            }
+        }
+        return null;
     }
 }
 
