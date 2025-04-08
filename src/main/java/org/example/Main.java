@@ -1,285 +1,165 @@
 package org.example;
 
-import java.sql.DriverManager;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
 public class Main {
-    public static void main(String[] args) {
 
-        System.out.println("==프로그램 시작==");
+    static List<Content> contents = new ArrayList<>();
+
+    public static void main(String[] args) {
+        System.out.println("== 명언 앱 실행 ==");
         Scanner sc = new Scanner(System.in);
 
-
-        int lastArticleId = 0;
-        List<Article> articles = new ArrayList<Article>();
-
+        int lastId = 0;
         while (true) {
             System.out.print("명령어) ");
             String cmd = sc.nextLine().trim();
 
-
-            if (cmd.equals("exit")) {
+            if (cmd.length() == 0) {
+                System.out.println("명령어를 입력하세요");
+                continue;
+            }
+            if (cmd.equals("종료")) {
+                System.out.println("== 명언 앱 종료 ==");
                 break;
             }
-            if (cmd.equals("article write")) {
-                int id = lastArticleId + 1;
+            if (cmd.equals("등록")) {
+                int id = lastId + 1;
 
-
-                System.out.print("제목 : ");
-                String title = sc.nextLine().trim();
-                System.out.print("내용 : ");
+                String regDate = Util.getNowStr();
+                String upDateDate = Util.getNowStr();
+                System.out.print("명언: ");
                 String content = sc.nextLine().trim();
+                System.out.print("작가: ");
+                String writer = sc.nextLine().trim();
 
+                Content save = new Content(id, regDate, upDateDate, content, writer);
+                contents.add(save);
 
-                System.out.println(id + "번 글이 작성되었습니다.");
-                lastArticleId++;
+                System.out.println(id + "번 명언이 등록되었습니다.");
+                lastId++;
+            } else if (cmd.equals("목록")) {
+                System.out.println("   번호   /   명언   /   작가   ");
+                System.out.println("================================");
 
-                /////////////////////////////////////////////////////////////
+                if (contents.size() == 0) {
+                    System.out.println("해당 명언이 없습니다.");
+                }
+                for (int i = contents.size() - 1; i >= 0; i--) {
+                    Content save = contents.get(i);
 
-                Connection conn = null;
+                    System.out.printf("   %d   /   %s   /   %s   \n", save.getId(), save.getContent(), save.getWriter());
+                }
+            } else if (cmd.startsWith("상세보기?id=")) {
+                int id = Integer.parseInt(cmd.substring(8));
 
-                Statement stmt = null;
+                Content foundId = founById(id);
 
-
-                try {
-                    Class.forName("org.mariadb.jdbc.Driver");
-                    String url = "jdbc:mariadb://127.0.0.1:3306/AM_DB_25_03?useUnicode=true&characterEncoding=utf8&autoReconnect=true&serverTimezone=Asia/Seoul";
-                    conn = DriverManager.getConnection(url, "root", "");
-                    System.out.println("연결 성공!");
-
-
-                    if (cmd.equals("article write")) {
-
-                        String sql = "INSERT INTO article" +
-                                " SET regDate = NOW()," +
-                                "updateDate = NOW()," +
-                                "title = '" + title + "'," +
-                                "content = '" + content + "';";
-
-
-                        System.out.println(sql);
-
-                        stmt = conn.createStatement();
-
-                        int result = stmt.executeUpdate(sql);
-
-                        System.out.println("result: " + result);
-
-                        if (result > 0) {
-                            System.out.println("입력 성공");
-                        } else {
-                            System.out.println("입력 실패");
-                        }
-
-                    }
-
-
-                } catch (ClassNotFoundException e) {
-                    System.out.println("드라이버 로딩 실패" + e);
-                } catch (SQLException e) {
-                    System.out.println("에러 : " + e);
-                } finally {
-                    try {
-                        if (conn != null && !conn.isClosed()) {
-                            conn.close();
-                        }
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
+                if (foundId == null) {
+                    System.out.println(id + "번 명언이 없습니다.");
+                    continue;
                 }
 
+                System.out.printf("번호: %d\n", foundId.getId());
+                System.out.printf("명언: %s\n", foundId.getContent());
+                System.out.printf("작가: %s\n", foundId.getWriter());
+                System.out.println("등록 날짜: " + foundId.getRegDate());
+                System.out.println("수정 날짜: " + foundId.getUpDateDate());
+            } else if (cmd.startsWith("수정?id=")) {
+                int id = Integer.parseInt(cmd.substring(6));
 
-            } else if (cmd.equals("article list")) {
-
-
-                Connection conn = null;
-
-                Statement stmt = null;
-
-                ResultSet rs = null;
-
-                List<Article> articleList = new ArrayList<Article>();
-
-                try {
-                    Class.forName("org.mariadb.jdbc.Driver");
-                    String url = "jdbc:mariadb://127.0.0.1:3306/AM_DB_25_03?useUnicode=true&characterEncoding=utf8&autoReconnect=true&serverTimezone=Asia/Seoul";
-                    conn = DriverManager.getConnection(url, "root", "");
-
-
-
-                    String sql = "select * from article" + " order by id desc";
-                    stmt = conn.createStatement();
-                    rs = stmt.executeQuery(sql);
-
-
-                    while (rs.next()) {
-                        int id = rs.getInt("id");
-                        String regDate = rs.getString("regDate");
-                        String updateDate = rs.getString("updateDate");
-                        String title = rs.getString("title");
-                        String content = rs.getString("content");
-
-                        Article article = new Article(id, regDate, updateDate, title, content);
-
-                        articleList.add(article);
-
-                    }
-                    System.out.println("   번호   /   제목   ");
-
-                    for (int i = 0; i < articleList.size(); i++) {
-                        System.out.printf("   %d   /   %s    \n", articleList.get(i).getId(), articleList.get(i).getTitle());
-                    }
-
-                } catch (SQLException e) {
-                    System.out.println("에러 : " + e);
-                } catch (ClassNotFoundException e) {
-                    throw new RuntimeException(e);
-                } finally {
-                    try {
-                        if (conn != null && !conn.isClosed()) {
-                            conn.close();
-                        }
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
-
-
-
-                }
-            }else if (cmd.startsWith("article modify")) {
-
-                int id = Integer.parseInt(cmd.split(" ")[2]);
-
-                Connection conn = null;
-
-                Statement stmt;
-
-                ResultSet rs = null;
-
-                try {
-                    Class.forName("org.mariadb.jdbc.Driver");
-                    String url = "jdbc:mariadb://127.0.0.1:3306/AM_DB_25_03?useUnicode=true&characterEncoding=utf8&autoReconnect=true&serverTimezone=Asia/Seoul";
-                    conn = DriverManager.getConnection(url, "root", "");
-
-                    System.out.print("새 제목: ");
-                    String title = sc.nextLine().trim();
-                    System.out.print("새 내용: ");
-                    String content = sc.nextLine().trim();
-
-
-                    // 글이 있는지 없는지?
-                   String sql2 = "SELECT * FROM article" +
-                           " WHERE id = " + id +
-                           "LIKE '%" + content + "%'";
-
-                    System.out.println(sql2);
-
-
-                    String sql = "UPDATE article" +
-                            " SET updateDate = NOW()," +
-                            "title = '" + title + "'," +
-                            "content = '" + content + "'" +
-                            " WHERE id = " + id + ";";
-
-                    System.out.println(sql);
-
-
-                    conn = DriverManager.getConnection(url, "root", "");
-                    stmt = conn.createStatement();
-                    rs = stmt.executeQuery(sql);
-
-
-
-
-
-                } catch (SQLException e) {
-                    System.out.println("에러 : " + e);
-                } catch (ClassNotFoundException e) {
-                    throw new RuntimeException(e);
-                } finally {
-                    try {
-                        if (conn != null && !conn.isClosed()) {
-                            conn.close();
-                        }
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
+                Content foundId = founById(id);
+                if (foundId == null) {
+                    System.out.println(id + "번 명언이 없습니다.");
+                    continue;
                 }
 
-            } else if (cmd.startsWith("article delete")) {
-                int id = Integer.parseInt(cmd.split(" ")[2]);
+                System.out.println("기존 명언: " + foundId.getContent());
+                System.out.println("기존 작가: " + foundId.getWriter());
 
-                Connection conn = null;
-                Statement stmt;
-                ResultSet rs = null;
-
-                try {
-                    Class.forName("org.mariadb.jdbc.Driver");
-                    String url = "jdbc:mariadb://127.0.0.1:3306/AM_DB_25_03?useUnicode=true&characterEncoding=utf8&autoReconnect=true&serverTimezone=Asia/Seoul";
-                    conn = DriverManager.getConnection(url, "root", "");
-
-
-
-
-
-                    String sql = "delete from article" +
-                            " where id =" + id +";";
-
-                    System.out.println(sql);
-
-
-                    conn = DriverManager.getConnection(url, "root", "");
-                    stmt = conn.createStatement();
-                    rs = stmt.executeQuery(sql);
-
-
-
-
-
-                } catch (SQLException e) {
-                    System.out.println("에러 : " + e);
-                } catch (ClassNotFoundException e) {
-                    throw new RuntimeException(e);
-                } finally {
-                    try {
-                        if (conn != null && !conn.isClosed()) {
-                            conn.close();
-                        }
-                    } catch (SQLException e) {
-                        e.printStackTrace();
+                for (int i = 0; i < contents.size(); i++) {
+                    Content save = contents.get(i);
+                    if (save.getId() == id) {
+                        foundId = save;
                     }
+                }
+                String newContent;
+                String newWriter;
+
+                while (true) {
+                    System.out.print("새 명언: ");
+                    newContent = sc.nextLine().trim();
+
+                    if (newContent.length() != 0) {
+                        break;
+                    }
+                    System.out.println("수정할 명언을 입력하세요");
+                }
+                while (true) {
+                    System.out.print("새 작가: ");
+                    newWriter = sc.nextLine().trim();
+
+                    if (newWriter.length() != 0) {
+                        break;
+                    }
+                    System.out.println("수정할 작가를 입력하세요");
                 }
 
 
 
+
+                foundId.setContent(newContent);
+                foundId.setWriter(newWriter);
+                foundId.setUpDateDate(Util.getNowStr());
+
+                System.out.println(id + "번 명언이 수정되었습니다.");
+            } else if (cmd.startsWith("삭제?id=")) {
+                int id = Integer.parseInt(cmd.substring(6));
+                Content foundId = founById(id);
+                int foundNum = 0;
+                if (foundId == null) {
+                    System.out.println(id + "번 명언이 없습니다.");
+                    continue;
+                }
+                for (int i = 0; i < contents.size(); i++) {
+                    Content save = contents.get(i);
+                    if (save.getId() == id) {
+                        foundId = save;
+                        foundNum = i;
+                    }
+                }
+                contents.remove(foundNum);
+                System.out.println(id + "번 명언이 삭제되었습니다.");
             }
         }
+        sc.close();
+    }
+
+    private static Content founById(int id) {
+        for (Content save : contents) {
+            if (save.getId() == id) {
+                return save;
+            }
+        }
+        return null;
     }
 }
 
+class Content {
+    int id;
+    String regDate;
+    String upDateDate;
+    String content;
+    String writer;
 
-
-
-class Article {
-    private int id;
-    private String regDate;
-    private String updateDate;
-    private String title;
-    private String content;
-
-    public Article(int id, String regDate, String updateDate, String title, String content) {
+    public Content(int id, String regDate, String upDateDate, String content, String writer) {
         this.id = id;
         this.regDate = regDate;
-        this.updateDate = updateDate;
-        this.title = title;
+        this.upDateDate = upDateDate;
         this.content = content;
-
+        this.writer = writer;
     }
 
     public int getId() {
@@ -298,20 +178,12 @@ class Article {
         this.regDate = regDate;
     }
 
-    public String getUpdateDate() {
-        return updateDate;
+    public String getUpDateDate() {
+        return upDateDate;
     }
 
-    public void setUpdateDate(String updateDate) {
-        this.updateDate = updateDate;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
+    public void setUpDateDate(String upDateDate) {
+        this.upDateDate = upDateDate;
     }
 
     public String getContent() {
@@ -321,4 +193,14 @@ class Article {
     public void setContent(String content) {
         this.content = content;
     }
+
+    public String getWriter() {
+        return writer;
+    }
+
+    public void setWriter(String writer) {
+        this.writer = writer;
+    }
 }
+
+
